@@ -341,6 +341,28 @@
 
   .checker{ width: 100%; height: 6px; background-image: repeating-conic-gradient(#dcccff 0% 25%, #17142e 0% 50%); background-size: 6px 6px; margin: 10px 0 14px; opacity: 0.7; }
 
+  /* ===== EDITABLE CATEGORIES ===== */
+  .controls-right{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .cat-add-row{ display:flex; gap:8px; }
+  .cat-add-row .task-input{ width: 170px; padding: 6px 10px; font-size: 13px; }
+  .dlabel-row{ display:flex; align-items:center; gap:8px; min-width:0; }
+  .cat-label{ cursor:text; border-bottom:1px dashed transparent; transition: all .15s ease; min-width:0; }
+  .cat-label:hover{ border-bottom-color: var(--border); color: var(--purple-bright); }
+  .cat-edit-input{
+    width:100%; background: var(--panel); border:1px solid var(--purple); color: var(--text);
+    font-family:'Rajdhani',sans-serif; font-weight:600; font-size:14px; letter-spacing:0.5px;
+    padding:3px 8px; outline:none; box-shadow: 0 0 10px rgba(183,148,246,0.25);
+  }
+  .cat-del{
+    background:none; border:none; color:var(--text-faint); font-size:14px; cursor:pointer;
+    line-height:1; padding:0 2px; flex:0 0 auto; opacity:0; transition: opacity .15s ease, color .15s ease;
+  }
+  .drow:hover .cat-del, .wcat:hover .cat-del, .legend-item:hover .cat-del{ opacity:1; }
+  .cat-del:hover{ color: var(--cross); }
+  .wcat{ gap:6px; }
+  .legend-item .cat-del{ font-size:11px; }
+  @media (hover:none){ .cat-del{ opacity:0.55; } }
+
   /* ===== FOOTER ===== */
   footer{ text-align:center; margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--border-soft); font-size: 11px; color: var(--text-faint); letter-spacing: 1px; font-family:'Share Tech Mono',monospace; }
   footer .heart{ color: var(--purple); text-shadow: 0 0 8px var(--glow); }
@@ -393,9 +415,16 @@
           <button class="tab-btn" data-view="week">Week</button>
           <button class="tab-btn" data-view="month">Month</button>
         </div>
-        <button class="today-btn" id="today-btn">● Today</button>
+        <div class="controls-right">
+          <form id="add-cat-form" class="cat-add-row" autocomplete="off">
+            <input type="text" id="cat-input" class="task-input" placeholder="New category name..." maxlength="60">
+            <button type="submit" class="today-btn" title="Add a new category row">+ Add</button>
+          </form>
+          <button class="today-btn" id="today-btn">● Today</button>
+        </div>
       </div>
       <div id="tracker-root">Loading…</div>
+      <div class="save-hint" style="text-align:center;">click a task name to rename it &middot; hover a row for &times; to delete &middot; auto-saved</div>
     </div>
 
     <!-- SIDEBAR COLUMN -->
@@ -446,7 +475,7 @@
 </div>
 
 <script>
-  const CATS = [
+  const DEFAULT_CATS = [
     { id:'class1',   label:'Class 1' },
     { id:'class2',   label:'Class 2' },
     { id:'backlog',  label:'Backlog' },
@@ -454,6 +483,7 @@
     { id:'dpp',      label:'DPP' },
     { id:'revision', label:'Revision' },
   ];
+  let catsList = [];
 
   let data = {};
   let notesList = [];
@@ -500,11 +530,14 @@
     const key = dateKey(currentDate);
     const label = currentDate.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
     const entry = data[key] || {};
-    const rows = CATS.map(c=>{
+    const rows = catsList.map(c=>{
       const st = entry[c.id];
       return `
       <div class="drow">
-        <div class="dlabel">${c.label}</div>
+        <div class="dlabel-row">
+          <span class="dlabel cat-label" data-edit-cat="${c.id}" title="Click to rename">${esc(c.label)}</span>
+          <button class="cat-del" data-del-cat="${c.id}" title="Delete category">&times;</button>
+        </div>
         <div class="dbtns">
           <button class="dbtn tick ${st==='tick'?'active':''}" data-set data-date="${key}" data-cat="${c.id}" data-status="tick">✓</button>
           <button class="dbtn cross ${st==='cross'?'active':''}" data-set data-date="${key}" data-cat="${c.id}" data-status="cross">✗</button>
@@ -534,8 +567,8 @@
       </div>`;
     }).join('');
 
-    let bodyRows = CATS.map(c=>{
-      let rowCells = `<div class="wcell wcat">${c.label}</div>`;
+    let bodyRows = catsList.map(c=>{
+      let rowCells = `<div class="wcell wcat"><span class="cat-label" data-edit-cat="${c.id}" title="Click to rename">${esc(c.label)}</span><button class="cat-del" data-del-cat="${c.id}" title="Delete category">&times;</button></div>`;
       days.forEach(d=>{
         const key = dateKey(d);
         const st = (data[key]||{})[c.id];
@@ -573,10 +606,10 @@
       const key = dateKey(d);
       const entry = data[key] || {};
       const isToday = isSameDay(d, new Date());
-      let dots = CATS.map(c=>{
+      let dots = catsList.map(c=>{
         const st = entry[c.id];
         const cls = st==='tick' ? 'dot tick' : st==='cross' ? 'dot cross' : 'dot none';
-        return `<span class="${cls}" title="${c.label}"></span>`;
+        return `<span class="${cls}" title="${esc(c.label)}"></span>`;
       }).join('');
       cells += `<div class="mcell${isToday?' today':''}" data-goto="${key}">
         <div class="mnum">${day}</div>
@@ -584,7 +617,7 @@
       </div>`;
     }
 
-    const legend = CATS.map(c=>`<span class="legend-item"><span class="dot none"></span>${c.label}</span>`).join('');
+    const legend = catsList.map(c=>`<span class="legend-item"><span class="dot none"></span><span class="cat-label" data-edit-cat="${c.id}" title="Click to rename">${esc(c.label)}</span><button class="cat-del" data-del-cat="${c.id}" title="Delete category">&times;</button></span>`).join('');
 
     return `
       <div class="panel-head">
@@ -635,6 +668,11 @@
   }
 
   document.getElementById('tracker-root').addEventListener('click',(e)=>{
+    if(e.target.closest('.cat-edit-input')) return;
+    const delCatBtn = e.target.closest('[data-del-cat]');
+    if(delCatBtn){ deleteCat(delCatBtn.dataset.delCat); return; }
+    const editEl = e.target.closest('[data-edit-cat]');
+    if(editEl){ startCatEdit(editEl); return; }
     const nav = e.target.closest('[data-nav]');
     if(nav){ navigate(nav.dataset.nav); return; }
     const goto = e.target.closest('[data-goto]');
@@ -656,8 +694,85 @@
   });
   document.getElementById('today-btn').addEventListener('click', ()=>{ currentDate = new Date(); render(); });
 
+  document.getElementById('add-cat-form').addEventListener('submit',(e)=>{
+    e.preventDefault();
+    const input = document.getElementById('cat-input');
+    addCat(input.value);
+    input.value = '';
+    input.focus();
+  });
+
   async function saveData(){
     await storageSet('zenpai_data', JSON.stringify(data));
+  }
+
+  /* ===================== CATEGORIES (user-editable rows) ===================== */
+  function esc(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  async function saveCats(){
+    await storageSet('zenpai_cats', JSON.stringify(catsList));
+  }
+
+  async function addCat(label){
+    const trimmed = label.trim();
+    if(!trimmed) return;
+    const id = 'cat-'+Date.now()+'-'+Math.floor(Math.random()*1000);
+    catsList.push({ id, label: trimmed });
+    await saveCats();
+    render();
+  }
+
+  async function renameCat(id, label){
+    const cat = catsList.find(c=>c.id===id);
+    const trimmed = label.trim();
+    if(!cat || !trimmed || cat.label === trimmed){ render(); return; }
+    cat.label = trimmed;
+    await saveCats();
+    render();
+  }
+
+  async function deleteCat(id){
+    const cat = catsList.find(c=>c.id===id);
+    if(!cat) return;
+    if(!confirm(`Delete "${cat.label}" and all of its tracked history?`)) return;
+    catsList = catsList.filter(c=>c.id!==id);
+    Object.keys(data).forEach(dateStr=>{
+      if(data[dateStr] && data[dateStr][id] !== undefined){
+        delete data[dateStr][id];
+        if(Object.keys(data[dateStr]).length === 0) delete data[dateStr];
+      }
+    });
+    await Promise.all([saveCats(), saveData()]);
+    render();
+  }
+
+  function startCatEdit(el){
+    const id = el.dataset.editCat;
+    const cat = catsList.find(c=>c.id===id);
+    if(!cat || el.querySelector('input')) return;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'cat-edit-input';
+    input.maxLength = 60;
+    input.value = cat.label;
+    el.innerHTML = '';
+    el.appendChild(input);
+    input.focus();
+    input.select();
+    let finished = false;
+    const commit = (save)=>{
+      if(finished) return;
+      finished = true;
+      if(save) renameCat(id, input.value);
+      else render();
+    };
+    input.addEventListener('keydown',(e)=>{
+      if(e.key==='Enter'){ e.preventDefault(); commit(true); }
+      else if(e.key==='Escape'){ e.preventDefault(); commit(false); }
+    });
+    input.addEventListener('blur',()=>commit(true));
   }
 
   /* ===================== NOTES (multi-entry log) ===================== */
@@ -800,6 +915,15 @@
       const rawTasks = await storageGet('zenpai_tasks');
       if(rawTasks) tasksList = JSON.parse(rawTasks);
     }catch(e){ tasksList = []; }
+
+    try{
+      const rawCats = await storageGet('zenpai_cats');
+      if(rawCats) catsList = JSON.parse(rawCats);
+    }catch(e){ catsList = []; }
+    if(!Array.isArray(catsList) || catsList.length === 0){
+      catsList = DEFAULT_CATS.slice();
+      saveCats();
+    }
 
     renderNotes();
     renderTasks();
