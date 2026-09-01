@@ -363,6 +363,53 @@
   .legend-item .cat-del{ font-size:11px; }
   @media (hover:none){ .cat-del{ opacity:0.55; } }
 
+  /* ===== PUSH PUSH OVERLAY ===== */
+  .sticker-badge{ cursor:pointer; transition: transform .2s ease, box-shadow .2s ease; }
+  .sticker-badge:hover{ transform: rotate(11deg) scale(1.08); box-shadow: 0 6px 18px rgba(0,0,0,0.5), 0 0 26px rgba(183,148,246,0.55); }
+  .push-overlay{
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(3,2,8,0.88);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s ease;
+  }
+  .push-overlay.open{ opacity: 1; pointer-events: auto; }
+  .push-modal{
+    position: relative;
+    max-width: min(560px, 92vw);
+    padding: 10px;
+    background: var(--panel-solid);
+    border: 1px solid var(--border);
+    box-shadow: 0 0 40px rgba(124,58,237,0.55), 0 30px 60px -20px rgba(0,0,0,0.8);
+    transform: scale(0.85);
+    transition: transform .25s cubic-bezier(.2,.8,.2,1);
+  }
+  .push-overlay.open .push-modal{ transform: scale(1); }
+  .push-modal img{
+    display: block; width: 100%; max-height: 72vh; object-fit: cover;
+    border: 1px solid var(--border-soft);
+  }
+  .push-modal .push-caption{
+    text-align: center; font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--purple); margin-top: 10px;
+    text-shadow: 0 0 10px var(--glow);
+  }
+  .push-close{
+    position: absolute; top: -14px; right: -14px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--purple-deep); border: 1px solid var(--border);
+    color: #fff; font-size: 18px; line-height: 1; cursor: pointer;
+    box-shadow: 0 0 14px var(--glow); transition: all .15s ease; z-index: 2;
+  }
+  .push-close:hover{ background: var(--cross); border-color: var(--cross); box-shadow: 0 0 14px var(--cross-glow); }
+  .push-fallback{
+    padding: 60px 30px; text-align: center;
+    font-family:'Share Tech Mono',monospace; font-size: 12px; color: var(--text-dim);
+    letter-spacing: 2px; border: 1px dashed var(--border-soft);
+  }
+
   /* ===== FOOTER ===== */
   footer{ text-align:center; margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--border-soft); font-size: 11px; color: var(--text-faint); letter-spacing: 1px; font-family:'Share Tech Mono',monospace; }
   footer .heart{ color: var(--purple); text-shadow: 0 0 8px var(--glow); }
@@ -449,7 +496,7 @@
       <!-- NOTES SIDEBAR -->
       <div class="panel notes-panel">
         <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
-        <div class="sticker-badge">
+        <div class="sticker-badge" id="push-badge" title="PUSH PUSH!">
           <div class="sticker-inner">
             <span class="sticker-flag">🏁🏁🏁</span>
             <span class="sticker-main">PUSH<br>PUSH</span>
@@ -468,6 +515,15 @@
 
     </div>
 
+  </div>
+
+  <!-- PUSH PUSH CELEBRATION OVERLAY -->
+  <div class="push-overlay" id="push-overlay" aria-hidden="true">
+    <div class="push-modal">
+      <button class="push-close" id="push-close" title="Close">&times;</button>
+      <img id="push-img" src="assets/push-push.jpg" alt="PUSH PUSH — P1 MINDSET">
+      <div class="push-caption mono" id="push-caption">PUSH PUSH &middot; P1 MINDSET &middot; 4&times; WORLD CHAMPION</div>
+    </div>
   </div>
 
   <footer>made with <span class="heart">&#10084;</span> by <span class="name">Devanshu</span></footer>
@@ -889,6 +945,38 @@
     if(toggle){ toggleTask(toggle.dataset.toggle); return; }
     const del = e.target.closest('[data-del-task]');
     if(del){ deleteTask(del.dataset.delTask); }
+  });
+
+  /* ===================== PUSH PUSH OVERLAY ===================== */
+  const pushOverlay = document.getElementById('push-overlay');
+  const pushImg = document.getElementById('push-img');
+  const pushCaption = document.getElementById('push-caption');
+  const PUSH_IMG_SRC = 'assets/push-push.jpg';
+
+  function openPush(){
+    pushOverlay.classList.add('open');
+    pushOverlay.setAttribute('aria-hidden','false');
+  }
+  function closePush(){
+    pushOverlay.classList.remove('open');
+    pushOverlay.setAttribute('aria-hidden','true');
+  }
+
+  document.getElementById('push-badge').addEventListener('click', openPush);
+  document.getElementById('push-close').addEventListener('click', closePush);
+  pushOverlay.addEventListener('click',(e)=>{ if(e.target === pushOverlay) closePush(); });
+  document.addEventListener('keydown',(e)=>{ if(e.key === 'Escape') closePush(); });
+
+  pushImg.addEventListener('error', ()=>{
+    // Image file missing — show a styled placeholder instead of a broken image.
+    if(pushImg.dataset.fallback === '1') return;
+    pushImg.dataset.fallback = '1';
+    pushImg.style.display = 'none';
+    pushCaption.innerHTML = '<span class="push-fallback">🏁 SAVE THE IMAGE AS<br>assets/push-push.jpg<br>TO UNLOCK P1 MINDSET 🏁</span>';
+  });
+  pushImg.addEventListener('load', ()=>{
+    if(pushImg.dataset.fallback === '1') return;
+    pushImg.style.display = '';
   });
 
   /* ===================== INIT / LOAD ===================== */
