@@ -539,14 +539,7 @@
 </div>
 
 <script>
-  const DEFAULT_CATS = [
-    { id:'class1',   label:'Class 1' },
-    { id:'class2',   label:'Class 2' },
-    { id:'backlog',  label:'Backlog' },
-    { id:'school',   label:'School Work' },
-    { id:'dpp',      label:'DPP' },
-    { id:'revision', label:'Revision' },
-  ];
+  const DEFAULT_CATS = [];
   let catsList = [];
 
   let data = {};
@@ -593,6 +586,15 @@
   function renderDay(){
     const key = dateKey(currentDate);
     const label = currentDate.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+    if(catsList.length === 0){
+      return `
+      <div class="panel-head">
+        <button class="nav-btn" data-nav="prev">‹</button>
+        <h2>${label}</h2>
+        <button class="nav-btn" data-nav="next">›</button>
+      </div>
+      <div class="empty-note" style="max-width:520px;margin:14px auto;">No task slots yet.<br>Add your first task above via “Add new task slot...” → + Add Task.</div>`;
+    }
     const entry = data[key] || {};
     const rows = catsList.map(c=>{
       const st = entry[c.id];
@@ -623,7 +625,15 @@
     const start = startOfWeek(currentDate);
     const days = [...Array(7)].map((_,i)=>{ const d = new Date(start); d.setDate(start.getDate()+i); return d; });
     const rangeLabel = `${days[0].toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${days[6].toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
-
+    if(catsList.length === 0){
+      return `
+      <div class="panel-head">
+        <button class="nav-btn" data-nav="prev">‹</button>
+        <h2>${rangeLabel}</h2>
+        <button class="nav-btn" data-nav="next">›</button>
+      </div>
+      <div class="empty-note">No task slots yet.<br>Add tasks via “Add new task slot...” → + Add Task.</div>`;
+    }
     let headRow = `<div class="wcell whead"></div>` + days.map(d=>{
       const isToday = isSameDay(d, new Date());
       return `<div class="wcell whead${isToday?' today':''}" data-goto="${dateKey(d)}">
@@ -663,7 +673,25 @@
     const startOffset = (first.getDay()+6) % 7;
     const daysInMonth = new Date(y,m+1,0).getDate();
     const monthLabel = currentDate.toLocaleDateString('en-US',{month:'long',year:'numeric'});
-
+    if(catsList.length === 0){
+      let cells = '';
+      for(let i=0;i<startOffset;i++){ cells += `<div class="mcell empty"></div>`; }
+      for(let day=1; day<=daysInMonth; day++){
+        const d = new Date(y,m,day);
+        const isToday = isSameDay(d, new Date());
+        cells += `<div class="mcell${isToday?' today':''}" data-goto="${dateKey(d)}"><div class="mnum">${day}</div><div class="mdots"></div></div>`;
+      }
+      return `
+      <div class="panel-head">
+        <button class="nav-btn" data-nav="prev">‹</button>
+        <h2>${monthLabel}</h2>
+        <button class="nav-btn" data-nav="next">›</button>
+      </div>
+      <div class="mweekdays">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(w=>`<div>${w}</div>`).join('')}</div>
+      <div class="mgrid">${cells}</div>
+      <div class="empty-note" style="margin-top:14px;">No task slots yet.<br>Add tasks via “Add new task slot...” → + Add Task.</div>
+      `;
+    }
     let cells = '';
     for(let i=0;i<startOffset;i++){ cells += `<div class="mcell empty"></div>`; }
     for(let day=1; day<=daysInMonth; day++){
