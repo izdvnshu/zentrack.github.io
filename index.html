@@ -353,15 +353,23 @@
     font-family:'Rajdhani',sans-serif; font-weight:600; font-size:14px; letter-spacing:0.5px;
     padding:3px 8px; outline:none; box-shadow: 0 0 10px rgba(183,148,246,0.25);
   }
+  .cat-edit-btn{
+    background:none; border:1px solid transparent; color:var(--text-faint); font-size:12px; cursor:pointer;
+    line-height:1; padding:2px 5px; flex:0 0 auto; opacity:0; transition: opacity .15s ease, color .15s ease, border-color .15s ease, background .15s ease;
+    border-radius:3px;
+  }
+  .cat-edit-btn:hover{ color:var(--purple-bright); border-color:var(--border); background:rgba(183,148,246,0.08); }
   .cat-del{
     background:none; border:none; color:var(--text-faint); font-size:14px; cursor:pointer;
     line-height:1; padding:0 2px; flex:0 0 auto; opacity:0; transition: opacity .15s ease, color .15s ease;
   }
-  .drow:hover .cat-del, .wcat:hover .cat-del, .legend-item:hover .cat-del{ opacity:1; }
+  .drow:hover .cat-del, .wcat:hover .cat-del, .legend-item:hover .cat-del,
+  .drow:hover .cat-edit-btn, .wcat:hover .cat-edit-btn, .legend-item:hover .cat-edit-btn{ opacity:1; }
   .cat-del:hover{ color: var(--cross); }
   .wcat{ gap:6px; }
   .legend-item .cat-del{ font-size:11px; }
-  @media (hover:none){ .cat-del{ opacity:0.55; } }
+  .legend-item .cat-edit-btn{ font-size:10px; padding:1px 4px; }
+  @media (hover:none){ .cat-del, .cat-edit-btn{ opacity:0.55; } }
 
   /* ===== PUSH PUSH OVERLAY ===== */
   .sticker-badge{ cursor:pointer; transition: transform .2s ease, box-shadow .2s ease; }
@@ -464,14 +472,14 @@
         </div>
         <div class="controls-right">
           <form id="add-cat-form" class="cat-add-row" autocomplete="off">
-            <input type="text" id="cat-input" class="task-input" placeholder="New category name..." maxlength="60">
-            <button type="submit" class="today-btn" title="Add a new category row">+ Add</button>
+            <input type="text" id="cat-input" class="task-input" placeholder="Add new task slot..." maxlength="60">
+            <button type="submit" class="today-btn" title="Add a new task row">+ Add Task</button>
           </form>
           <button class="today-btn" id="today-btn">● Today</button>
         </div>
       </div>
       <div id="tracker-root">Loading…</div>
-      <div class="save-hint" style="text-align:center;">click a task name to rename it &middot; hover a row for &times; to delete &middot; auto-saved</div>
+      <div class="save-hint" style="text-align:center;">click task name or ✎ to rename &middot; hover row for ✎ / &times; &middot; + Add Task to create new slots &middot; auto-saved</div>
     </div>
 
     <!-- SIDEBAR COLUMN -->
@@ -591,8 +599,9 @@
       return `
       <div class="drow">
         <div class="dlabel-row">
-          <span class="dlabel cat-label" data-edit-cat="${c.id}" title="Click to rename">${esc(c.label)}</span>
-          <button class="cat-del" data-del-cat="${c.id}" title="Delete category">&times;</button>
+          <span class="dlabel cat-label" data-edit-cat="${c.id}" title="Click to rename task">${esc(c.label)}</span>
+          <button class="cat-edit-btn" data-edit-cat="${c.id}" title="Rename task">✎</button>
+          <button class="cat-del" data-del-cat="${c.id}" title="Delete task">&times;</button>
         </div>
         <div class="dbtns">
           <button class="dbtn tick ${st==='tick'?'active':''}" data-set data-date="${key}" data-cat="${c.id}" data-status="tick">✓</button>
@@ -624,7 +633,7 @@
     }).join('');
 
     let bodyRows = catsList.map(c=>{
-      let rowCells = `<div class="wcell wcat"><span class="cat-label" data-edit-cat="${c.id}" title="Click to rename">${esc(c.label)}</span><button class="cat-del" data-del-cat="${c.id}" title="Delete category">&times;</button></div>`;
+      let rowCells = `<div class="wcell wcat"><span class="cat-label" data-edit-cat="${c.id}" title="Click to rename task">${esc(c.label)}</span><button class="cat-edit-btn" data-edit-cat="${c.id}" title="Rename task">✎</button><button class="cat-del" data-del-cat="${c.id}" title="Delete task">&times;</button></div>`;
       days.forEach(d=>{
         const key = dateKey(d);
         const st = (data[key]||{})[c.id];
@@ -673,7 +682,7 @@
       </div>`;
     }
 
-    const legend = catsList.map(c=>`<span class="legend-item"><span class="dot none"></span><span class="cat-label" data-edit-cat="${c.id}" title="Click to rename">${esc(c.label)}</span><button class="cat-del" data-del-cat="${c.id}" title="Delete category">&times;</button></span>`).join('');
+    const legend = catsList.map(c=>`<span class="legend-item"><span class="dot none"></span><span class="cat-label" data-edit-cat="${c.id}" title="Click to rename task">${esc(c.label)}</span><button class="cat-edit-btn" data-edit-cat="${c.id}" title="Rename task">✎</button><button class="cat-del" data-del-cat="${c.id}" title="Delete task">&times;</button></span>`).join('');
 
     return `
       <div class="panel-head">
