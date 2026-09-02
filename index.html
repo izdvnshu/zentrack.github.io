@@ -1045,10 +1045,30 @@
       const rawCats = await storageGet('zenpai_cats');
       if(rawCats) catsList = JSON.parse(rawCats);
     }catch(e){ catsList = []; }
-    if(!Array.isArray(catsList) || catsList.length === 0){
-      catsList = DEFAULT_CATS.slice();
-      saveCats();
+    // --- MIGRATION: remove old default slots (Class1/Class2/Backlog/School Work/DPP/Revision) ---
+    const OLD_DEFAULT_IDS = ['class1','class2','backlog','school','dpp','revision'];
+    let catsDirty = false, dataDirty = false;
+    if(Array.isArray(catsList) && catsList.length){
+      const before = catsList.length;
+      catsList = catsList.filter(c => !OLD_DEFAULT_IDS.includes(c.id));
+      if(catsList.length !== before){
+        catsDirty = true;
+        // clean historic tick/cross data for those removed ids
+        Object.keys(data).forEach(k=>{
+          const row = data[k];
+          if(!row) return;
+          OLD_DEFAULT_IDS.forEach(id=>{ if(row[id]!==undefined){ delete row[id]; dataDirty = true; } });
+          if(Object.keys(row).length===0) { delete data[k]; dataDirty = true; }
+        });
+      }
     }
+    if(!Array.isArray(catsList)) { catsList = []; catsDirty = true; }
+    if(catsList.length === 0 && DEFAULT_CATS.length > 0){
+      catsList = DEFAULT_CATS.slice();
+      catsDirty = true;
+    }
+    if(catsDirty) await saveCats();
+    if(dataDirty) await saveData();
 
     renderNotes();
     renderTasks();
