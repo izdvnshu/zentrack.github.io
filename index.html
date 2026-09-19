@@ -161,6 +161,62 @@
     to{ transform: translateX(0) rotate(-3deg); opacity:0.95; }
   }
 
+  /* ===== DOWNLOAD BOX ===== */
+  .dl-box{
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 16px;
+    padding: 16px 18px 14px;
+    width: fit-content;
+    max-width: 100%;
+    background: linear-gradient(180deg, rgba(124,58,237,0.12), rgba(10,8,20,0.92));
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 16px 34px -22px rgba(124,58,237,0.55), 0 0 22px rgba(183,148,246,0.08) inset;
+    animation: borderPulse 5s infinite ease-in-out;
+    max-width: 100%;
+  }
+  .dl-box-label{
+    flex: 0 0 100%;
+    font-family:'Share Tech Mono',monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--purple);
+    opacity: 0.85;
+    text-align: center;
+    margin-bottom: 2px;
+  }
+  .dl-box-label::before{ content:'// '; color: var(--text-faint); }
+
+  .dl-btn{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family:'Share Tech Mono',monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--purple-deep), #5b21b6);
+    color: #fff;
+    padding: 8px 14px;
+    border: 1px solid var(--purple);
+    text-decoration: none;
+    box-shadow: 0 0 14px rgba(183,148,246,0.4);
+    transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+  }
+  .dl-btn:hover{
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    box-shadow: 0 0 22px var(--glow);
+    transform: translateY(-1px);
+  }
+  .dl-btn:active{ transform: translateY(0); }
+  .dl-btn:focus-visible{ outline: 2px solid var(--purple-bright); outline-offset: 2px; }
+  .dl-btn .dl-ico{ font-size: 13px; line-height: 1; }
+
   /* ===== LAYOUT ===== */
   .layout{ display:grid; grid-template-columns: 1fr 320px; gap: 22px; align-items:start; }
   @media (max-width: 880px){
@@ -456,8 +512,11 @@
       <span class="divider">|</span>
       <span id="hud-clock" class="mono">00:00:00</span>
     </div>
-    <div style="margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-      <a href="DEV X ZEN (1).ipynb" download="DEV X ZEN (1).ipynb" style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;padding:8px 14px;border:1px solid #b794f6;text-decoration:none;box-shadow:0 0 14px rgba(183,148,246,0.4)">📓 Download DEV X ZEN (1).ipynb</a>
+    <div class="dl-box">
+      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+      <div class="dl-box-label">File Drop &middot; Downloadables</div>
+      <a class="dl-btn" href="DEV X ZEN (1).ipynb" download="DEV X ZEN (1).ipynb"><span class="dl-ico">📓</span>Download DEV X ZEN (1).ipynb</a>
+      <a class="dl-btn" href="practicle_half_yearly.pdf" download="practicle_half_yearly.pdf"><span class="dl-ico">📄</span>Download practicle_half_yearly.pdf</a>
     </div>
   </header>
 
